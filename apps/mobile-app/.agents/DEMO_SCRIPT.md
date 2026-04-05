@@ -2,120 +2,121 @@
 
 Đây là kịch bản demo trình diễn toàn bộ sinh thái của hệ thống Antigravity Agent dành cho Mobile Developer, trải dài mọi ngóc ngách của quá trình phát triển dự án.
 
-## 🌟 Chân dung Kịch bản: Tính năng "Giỏ Hàng" (Cart Screen)
-- **Idea**: Thêm màn hình Giỏ Hàng cho ứng dụng E-commerce (Hiển thị list các món hàng, tổng tiền, nút thanh toán).
+## 🌟 Chân dung Kịch bản: Ứng dụng Quản Lý Chi Tiêu (Expense Tracker)
+- **Idea**: Xây dựng màn hình Dashboard Thống Kê Chi Tiêu (Hiển thị số dư hiện tại, danh sách giao dịch thu/chi gần nhất, và nút Thêm giao dịch).
 - **Trạng thái**: Đã có file thiết kế Figma.
 
 ---
 
 ### Bước 1: Ý Tưởng & Phân Tích (Idea → Tasks)
-*Ngữ cảnh: PM vừa chốt yêu cầu xây dựng màn hình Giỏ hàng. Dev sẽ bắt đầu bằng việc nhờ AI "nhai" specs và biến nó thành Tasks.*
+*Ngữ cảnh: Bạn vừa nhận yêu cầu xây dựng màn hình Dashboard. Thay vì code ngay, bạn nhờ AI phân rã yêu cầu thành các block nhỏ.*
 
 **Lệnh thực hiện:**
 ```bash
-/analyze-spec Xây dựng màn hình Giỏ hàng. Yêu cầu:
-- Hiển thị danh sách sản phẩm (có nút xoá, đổi số lượng).
-- Hiển thị tổng tiền.
-- Bấm nút Checkout.
-- Có link Figma: https://figma.com/design/xxxxx?node-id=CART
+/analyze-spec Xây dựng màn hình Dashboard Quản lý chi tiêu. Yêu cầu:
+- Hiển thị Số dư hiện tại ở trên cùng.
+- Hiển thị danh sách Giao dịch (Transaction) gần đây, khoản thu màu xanh dương, khoản chi màu đỏ.
+- Nút FAB (Floating Action Button) tròn ở góc dưới bên phải để Thêm giao dịch.
+- Có link Figma: https://figma.com/design/xxxxx?node-id=DASHBOARD
 ```
 
 **Phản ứng của AI:**
-- Bóc tách thành 4 Task nhỏ: 
-  1. Tạo `CartService` (gọi API).
-  2. Tạo `useCartStore` (Dùng Zustand để gom state offline).
-  3. Tạo `CartItem` (Component giao diện từ Figma).
-  4. Tạo `CartScreen` (Màn hình chính).
+- Bóc tách thành 4 Task nhỏ để dễ trị: 
+  1. Tạo `ExpenseService` (gọi API lấy data).
+  2. Tạo `useExpenseStore` (Dùng Zustand để gom state offline cache).
+  3. Tạo Component `TransactionCard` (Từ giao diện Figma).
+  4. Lắp ráp màn hình chính `ExpenseDashboard`.
 
 ---
 
 ### Bước 2: Setup & Tích Hợp Figma (Figma MCP)
-*Ngữ cảnh: Đi thẳng vào code phần giao diện trước. Dev sẽ kêu AI gõ Component `CartItem` cho giống hệt Figma.*
+*Ngữ cảnh: Đi thẳng vào code phần giao diện từng dòng giao dịch. Bạn lười đo CSS.*
 
 **Lệnh thực hiện:**
 ```bash
-/new-component CartItem Tham chiếu thiết kế từ node Figma này: https://figma.com/design/xxxxx?node-id=CART_ITEM
+/new-component TransactionCard Tham chiếu thiết kế từ node Figma này: https://figma.com/design/xxxxx?node-id=TRANSACTION_CARD
 ```
 
 **Phản ứng của AI:**
-- Kết nối thông qua **Figma MCP**, đọc mã màu (Ví dụ: `Red-500` -> `COLORS.danger`), đọc spacing (`16px` -> `SPACING.md`).
-- Tự động sinh ra file `CartItem.tsx` bằng React Native (StyleSheet bám chuẩn Rule 17).
-- Chèn sẵn Test cơ bản cho accessibility.
+- Kết nối thông qua **Figma MCP**, đọc mã màu (Thu: `#22C55E` -> `COLORS.success`, Chi: `#EF4444` -> `COLORS.danger`), đọc spacing.
+- Tự động sinh ra file `TransactionCard.tsx` pixel-perfect bằng React Native.
+- Phân tách ra 2 trạng thái `income` và `expense` nhờ việc định nghĩa Props thông minh.
 
 ---
 
 ### Bước 3: Lắp ráp Logic Toàn Tuyến (Init Source & Do Task)
-*Ngữ cảnh: Nối UI vào Logic và tạo các Service.*
+*Ngữ cảnh: Cần làm API để lấy danh sách chi tiêu và tạo State Management chuẩn.*
 
 **Lệnh thực hiện:**
 ```bash
-/do-task Thực hiện Task 1 và Task 2: Dựng CartService dùng Axios và useCartStore dùng Zustand có tích hợp bộ nhớ offline MMKV.
+/do-task Thực hiện Task 1 và Task 2: Dựng ExpenseService dùng Axios và useExpenseStore dùng Zustand có tích hợp bộ nhớ offline MMKV.
 ```
 
 **Phản ứng của AI:**
-- Bám sát `rules/state-management.md` & `rules/offline-caching.md`: Sinh ra file store của Zustand với `persist` middleware trỏ vào MMKV Storage.
-- Tuân thủ `rules/api-integration.md`: Tạo `CartService.ts` bằng Axios.
+- Bám sát `rules/state-management.md` & `rules/offline-caching.md`: Sinh ra file store của Zustand với `persist` middleware trỏ vào MMKV Storage (giúp cho người dùng vẫn xem được các khoản chi tiêu khi mất mạng).
+- Tuân thủ `rules/api-integration.md`: Tạo `ExpenseService.ts` bắt lỗi Axios mượt mà.
 
 ---
 
 ### Bước 4: Tạo Screen (Ráp mọi thứ lại)
-*Ngữ cảnh: Giao diện và API đã có, giờ tạo Màn Hình tổng.*
+*Ngữ cảnh: Component và Logic đã có, giờ tạo Màn Hình tổng hiển thị danh sách thu chi.*
 
 **Lệnh thực hiện:**
 ```bash
-/new-screen CartScreen Ráp CartItem và bộ store Zustand vừa tạo vào màn hình này nhé.
+/new-screen ExpenseDashboard Ráp TransactionCard và bộ store Zustand vừa tạo vào màn hình này nhé.
 ```
 
 **Phản ứng của AI:**
-- Bám sát `rules/error-handling.md`: Sinh ra `CartScreen.tsx` với đủ 4 trạng thái bắt buộc: `Loading` (Skeleton), `Empty` (Chưa có gì trong giỏ hàng), `Error`, và hiển thị dữ liệu `Data`.
-- Dùng FlatList tối ưu theo rule `performance.md`.
+- Bám sát `rules/error-handling.md`: Sinh ra màn `ExpenseDashboard.tsx` với đủ 4 trạng thái bắt buộc: `Loading` (Hiệu ứng chớp nháy Skeleton thay vì icon xoay loard), `Empty` (Chưa có nợ nần/thu nhập gì), `Error`, và hiển thị `Data`.
+- Dùng FlatList tối ưu thay vì `.map()` array để lướt mượt mà báo cáo 1000 dòng chi tiêu (Theo rule `performance.md`).
 
 ---
 
 ### Bước 5: Bắt Bug Thực Tế (Fix Bug)
-*Ngữ cảnh: Khi chạy app, nút "Xoá món hàng" bấm trên Android khó ăn vì dính viền.*
+*Ngữ cảnh: Chạy thử trên iPhone có tai thỏ/đảo động, nút tròn bự (Thêm chi tiêu) nằm dưới cùng màn hình bị dính sát vào thanh quẹt mỏng (home indicator) dưới đáy màn hình!*
 
 **Lệnh thực hiện:**
 ```bash
-/mobile-fix-issue Nút xoá trên Android bấm rất khó ăn, vùng chạm đang bị quá bé hụt tay.
+/mobile-fix-issue Nút FAB (nút tròn) bị che dính lẹm vào phần đáy iOS (home indicator). Fix giùm tôi.
 ```
 
 **Phản ứng của AI:**
-- Nhớ tới Rule `rules/accessibility.md`.
-- Phát hiện ra lỗi `hitSlop`.
-- Phản hồi: Tự động chèn `<TouchableOpacity hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>` để nới rộng vùng thao tác trên Mobile an toàn mà không làm lỡ layout.
+- Nhớ tới Rule `rules/accessibility.md` về Safe Area.
+- Phát hiện root cause do gắn `bottom: 16` cứng ngắc.
+- Tự động sửa lại UI import `useSafeAreaInsets` từ `react-native-safe-area-context` và đổi CSS thành `bottom: insets.bottom + 16` để nút nổi lên cực mượt cho cả dòng máy thường lẫn máy Pro Max!
 
 ---
 
 ### Bước 6: Kỷ luật Thép — Ép viết Test (Write Unit Test)
-*Ngữ cảnh: Dev lười viết Test và muốn trốn khâu Unit Test cho `useCartStore`.*
+*Ngữ cảnh: Code xong xuôi, bạn định commit nhưng tính trốn Test.*
 
 **Luật ngầm hoạt động:** 
-AI chủ động nhắc nhở dựa trên bộ workflows: "Bạn chưa cung cấp Unit test cho store này. Hãy dùng `/write-tests` trước khi commit!".
+AI chủ động rà code khi gọi `/commit-push` và cảnh báo: "Khoan! Bạn vừa viết mới file `useExpenseStore` phân tích các phép cộng trừ Số Dư nhưng chưa hề có file Unit test. Vui lòng chạy lệnh Test!".
 
 **Lệnh thực hiện:**
 ```bash
-/write-tests Hãy generate Unit test coverage cho file useCartStore.ts
+/write-tests Hãy generate Unit test coverage cho file useExpenseStore.ts
 ```
 
 **Phản ứng của AI:**
-- Import thư viện `@testing-library/react-native`.
-- Sinh ra full kịch bản test: "Trường hợp thêm đồ vào giỏ", "Trường hợp xoá đồ", bảo đảm **bao phủ 80%** (theo Rule Testing).
+- Gọi Jest, giả lập các thao tác người dùng (Thêm 50k ăn phở, Trừ 10k gửi xe).
+- Kiểm chứng kết quả "Số dư" xem có cộng trừ đúng không.
+- Bảo đảm **bao phủ 80% coverage** theo chuẩn `testing.md`.
 
 ---
 
 ### Bước 7: Done! Push Code (Commit Push)
-*Ngữ cảnh: Mọi chức năng đã hoàn thành trơn tru.*
+*Ngữ cảnh: Mọi module App chi tiêu đã hoàn thiện.*
 
 **Lệnh thực hiện:**
 ```bash
-/commit-push Màn hình giỏ hàng
+/commit-push Hoàn thiện màn hình Dashboard Quản lý chi tiêu
 ```
 
 **Phản ứng của AI:**
-- Mở quy trình tự xét duyệt: Chạy `eslint`, chạy `jest` xem test vừa gõ có pass không.
-- Nếu Pass: AI tự động parse nội dung, tuân thủ độ dài commit < 60 ký tự.
-- Thực thi: `git add .`, `git commit -m "feat(cart): implement cart screen with zustand and offline"`, và `git push origin`.
+- Mở quy trình tự xét duyệt: Chạy `eslint`, chạy `jest` nội bộ.
+- Pass 100%! AI format commit sang chuẩn Conventional và ép ngắn dưới 60 ký tự: `feat(expense): implement dashboard screen and offline store`.
+- Thực thi: `git add .`, `git commit`, và `git push`.
 
 ---
-🎉 **HOÀN TẤT VÒNG ĐỜI**: Tất cả đều được tự động hoá và bám sát cực độ vào cuốn sổ "17 Lời Răn Mobile Developer" của bạn.
+🎉 **HOÀN TẤT VÒNG ĐỜI**: Một kịch bản code tính năng từ Z-A, ứng dụng hoàn hảo quyền năng giám sát kỷ luật lập trình của Agent System.
