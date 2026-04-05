@@ -1,122 +1,121 @@
 # Kịch Bản Trình Diễn Toàn Diện (End-to-End Master Demo)
 
-Đây là kịch bản demo trình diễn toàn bộ sinh thái của hệ thống Antigravity Agent dành cho Mobile Developer, trải dài mọi ngóc ngách của quá trình phát triển dự án.
+Đây là kịch bản demo trình diễn toàn bộ sinh thái của hệ thống Antigravity Agent dành cho Mobile Developer, trải dài mọi ngóc ngách của quá trình phát triển dự án. Một kịch bản mang tính đột phá và ứng dụng AI cực mạnh.
 
-## 🌟 Chân dung Kịch bản: Ứng dụng Quản Lý Chi Tiêu (Expense Tracker)
-- **Idea**: Xây dựng màn hình Dashboard Thống Kê Chi Tiêu (Hiển thị số dư hiện tại, danh sách giao dịch thu/chi gần nhất, và nút Thêm giao dịch).
-- **Trạng thái**: Đã có file thiết kế Figma.
+## 🌟 Chân dung Kịch bản: Ứng dụng Chi Tiêu Bằng AI (AI Expense Tracker)
+- **Idea**: Người dùng quá lười để nhập từng con số chi tiêu. 
+  - **Tính năng 1 (Smart Input)**: Chỉ cần "chụp hình tờ hoá đơn" hoặc gõ tin nhắn "Ăn phở 50k", app tự trích xuất số tiền và lưu data.
+  - **Tính năng 2 (Monthly View)**: Màn hình Dashboard quản lý toàn bộ chi tiêu trong tháng, kèm biểu đồ.
+- **Trạng thái**: Đã có bản phác thảo Figma, sẵn sàng để code.
 
 ---
 
 ### Bước 1: Ý Tưởng & Phân Tích (Idea → Tasks)
-*Ngữ cảnh: Bạn vừa nhận yêu cầu xây dựng màn hình Dashboard. Thay vì code ngay, bạn nhờ AI phân rã yêu cầu thành các block nhỏ.*
+*Ngữ cảnh: Yêu cầu cực khó vì dính tới AI Parsing và Camera. Bạn dùng AI Agent để bẻ nhỏ bài toán phức tạp.*
 
 **Lệnh thực hiện:**
 ```bash
-/analyze-spec Xây dựng màn hình Dashboard Quản lý chi tiêu. Yêu cầu:
-- Hiển thị Số dư hiện tại ở trên cùng.
-- Hiển thị danh sách Giao dịch (Transaction) gần đây, khoản thu màu xanh dương, khoản chi màu đỏ.
-- Nút FAB (Floating Action Button) tròn ở góc dưới bên phải để Thêm giao dịch.
-- Có link Figma: https://figma.com/design/xxxxx?node-id=DASHBOARD
+/analyze-spec Xây dựng app chi tiêu rảnh tay. Yêu cầu:
+1. Màn hình thêm chi tiêu: Có ô chat Text hoặc Upload/Chụp ảnh hoá đơn. Tự bóc tách chuỗi "cafe 40k" thành { category: 'food', amount: 40000 }.
+2. Màn hình Monthly View: Xem biểu đồ tổng chi tiêu trong tháng.
+- Có link Figma: https://figma.com/design/xxxxx?node-id=SMART_EXPENSE
 ```
 
 **Phản ứng của AI:**
-- Bóc tách thành 4 Task nhỏ để dễ trị: 
-  1. Tạo `ExpenseService` (gọi API lấy data).
-  2. Tạo `useExpenseStore` (Dùng Zustand để gom state offline cache).
-  3. Tạo Component `TransactionCard` (Từ giao diện Figma).
-  4. Lắp ráp màn hình chính `ExpenseDashboard`.
+- Lên ngay chiến lược 4 Task:
+  1. Cài native module `expo-image-picker` để lấy mâm ảnh/camera.
+  2. Dựng `SmartParserService` gọi API lên GPT/Claude bóc tách tiền tệ.
+  3. Dựng Màn hình `SmartInputScreen`.
+  4. Dựng Component biểu đồ & Màn hình `MonthlyViewScreen` với Zustand để lưu cache.
 
 ---
 
-### Bước 2: Setup & Tích Hợp Figma (Figma MCP)
-*Ngữ cảnh: Đi thẳng vào code phần giao diện từng dòng giao dịch. Bạn lười đo CSS.*
+### Bước 2: Setup Phức Tạp (Cài Native Module)
+*Ngữ cảnh: Làm việc với Camera/Thư viện ảnh rất hay lỗi permission và config. Nhờ AI lo giùm.*
 
 **Lệnh thực hiện:**
 ```bash
-/new-component TransactionCard Tham chiếu thiết kế từ node Figma này: https://figma.com/design/xxxxx?node-id=TRANSACTION_CARD
+/add-native-module Thêm expo-image-picker và cấu hình quyền camera/thư viện ảnh.
 ```
 
 **Phản ứng của AI:**
-- Kết nối thông qua **Figma MCP**, đọc mã màu (Thu: `#22C55E` -> `COLORS.success`, Chi: `#EF4444` -> `COLORS.danger`), đọc spacing.
-- Tự động sinh ra file `TransactionCard.tsx` pixel-perfect bằng React Native.
-- Phân tách ra 2 trạng thái `income` và `expense` nhờ việc định nghĩa Props thông minh.
+- Tự động chạy lệnh cài package.
+- Tự động chui vào file `app.json` khai báo `NSCameraUsageDescription` và `NSPhotoLibraryUsageDescription` để app không bị Apple/Google từ chối khi submit store.
 
 ---
 
-### Bước 3: Lắp ráp Logic Toàn Tuyến (Init Source & Do Task)
-*Ngữ cảnh: Cần làm API để lấy danh sách chi tiêu và tạo State Management chuẩn.*
+### Bước 3: Lắp ráp Logic AI (Init Source & Do Task)
+*Ngữ cảnh: Dựng cục logic cốt lõi nhất — bóc tách hình ảnh/văn bản thành cục Data.*
 
 **Lệnh thực hiện:**
 ```bash
-/do-task Thực hiện Task 1 và Task 2: Dựng ExpenseService dùng Axios và useExpenseStore dùng Zustand có tích hợp bộ nhớ offline MMKV.
+/do-task Dựng SmartParserService gom logic bóc tách văn bản. Dùng Zustand để lưu Record chi tiêu cục bộ (Offline first) khi bóc tách xong.
 ```
 
 **Phản ứng của AI:**
-- Bám sát `rules/state-management.md` & `rules/offline-caching.md`: Sinh ra file store của Zustand với `persist` middleware trỏ vào MMKV Storage (giúp cho người dùng vẫn xem được các khoản chi tiêu khi mất mạng).
-- Tuân thủ `rules/api-integration.md`: Tạo `ExpenseService.ts` bắt lỗi Axios mượt mà.
+- Tuân thủ `rules/state-management.md`: Dùng Zustand persist với MMKV (Tốc độ đọc ghi tính bằng mili-giây).
+- Xây Service gửi string/base64 ảnh lên AI model để bóc tách thành format JSON `{ title: string, amount: number }`.
 
 ---
 
-### Bước 4: Tạo Screen (Ráp mọi thứ lại)
-*Ngữ cảnh: Component và Logic đã có, giờ tạo Màn Hình tổng hiển thị danh sách thu chi.*
+### Bước 4: Tạo Screen & Đọc Figma (MCP)
+*Ngữ cảnh: Cần tạo giao diện Màn Hình Thống Kê Tháng (Monthly View) y hệt thiết kế.*
 
 **Lệnh thực hiện:**
 ```bash
-/new-screen ExpenseDashboard Ráp TransactionCard và bộ store Zustand vừa tạo vào màn hình này nhé.
+/new-screen MonthlyViewScreen Đọc form màn hình này từ Figma https://figma.com/design/xxxxx?node-id=MONTHLY_VIEW và móc nối data từ Zustand ra hiển thị nhé.
 ```
 
 **Phản ứng của AI:**
-- Bám sát `rules/error-handling.md`: Sinh ra màn `ExpenseDashboard.tsx` với đủ 4 trạng thái bắt buộc: `Loading` (Hiệu ứng chớp nháy Skeleton thay vì icon xoay loard), `Empty` (Chưa có nợ nần/thu nhập gì), `Error`, và hiển thị `Data`.
-- Dùng FlatList tối ưu thay vì `.map()` array để lướt mượt mà báo cáo 1000 dòng chi tiêu (Theo rule `performance.md`).
+- **Figma MCP kích hoạt**: Tự động bóc tách mã màu (màu đỏ của chi, màu xanh của thu). Tính toán kích thước padding chính xác xuống từng pixel.
+- Tự dựng `FlatList` để nhồi list 50 giao dịch trong tháng vừa móc từ Zustand đảm bảo lướt mượt 60fps (chuẩn `rules/performance.md`).
 
 ---
 
 ### Bước 5: Bắt Bug Thực Tế (Fix Bug)
-*Ngữ cảnh: Chạy thử trên iPhone có tai thỏ/đảo động, nút tròn bự (Thêm chi tiêu) nằm dưới cùng màn hình bị dính sát vào thanh quẹt mỏng (home indicator) dưới đáy màn hình!*
+*Ngữ cảnh: Chạy app thử trên Device thật dính chưởng. Chụp hình hoá đơn xong app văng cái rầm vì hình dung lượng 10MB quá nặng để parse.*
 
 **Lệnh thực hiện:**
 ```bash
-/mobile-fix-issue Nút FAB (nút tròn) bị che dính lẹm vào phần đáy iOS (home indicator). Fix giùm tôi.
+/mobile-fix-issue Chụp xong app bị crash (văng) do ảnh nặng, hao bộ nhớ. Fix giùm tôi.
 ```
 
 **Phản ứng của AI:**
-- Nhớ tới Rule `rules/accessibility.md` về Safe Area.
-- Phát hiện root cause do gắn `bottom: 16` cứng ngắc.
-- Tự động sửa lại UI import `useSafeAreaInsets` từ `react-native-safe-area-context` và đổi CSS thành `bottom: insets.bottom + 16` để nút nổi lên cực mượt cho cả dòng máy thường lẫn máy Pro Max!
+- AI phát hiện vấn đề Memory Leak / Payload quá lớn.
+- Kích hoạt quy trình Fix: AI tự động chỉnh lại logic của `expo-image-picker` thêm thuộc tính `quality: 0.5` hoặc `base64: true` với mức độ nén ảnh thông minh trước khi ném vào Service, giải quyết dứt điểm rớt RAM.
 
 ---
 
 ### Bước 6: Kỷ luật Thép — Ép viết Test (Write Unit Test)
-*Ngữ cảnh: Code xong xuôi, bạn định commit nhưng tính trốn Test.*
+*Ngữ cảnh: Mọi module chạy rất ngon. Thay vì test lặp đi lặp lại bằng tay, ta để AI tự test logic Parse tiền tệ.*
 
 **Luật ngầm hoạt động:** 
-AI chủ động rà code khi gọi `/commit-push` và cảnh báo: "Khoan! Bạn vừa viết mới file `useExpenseStore` phân tích các phép cộng trừ Số Dư nhưng chưa hề có file Unit test. Vui lòng chạy lệnh Test!".
+AI chủ động rà mã khi đang code và báo: Logic bóc tách "Cafe 50k" rất dễ rủi ro. Yêu cầu có Unit Test.
 
 **Lệnh thực hiện:**
 ```bash
-/write-tests Hãy generate Unit test coverage cho file useExpenseStore.ts
+/write-tests Generate Unit test cho file SmartParserService.ts, check case đầu vào "ăn bún bò 35k".
 ```
 
 **Phản ứng của AI:**
-- Gọi Jest, giả lập các thao tác người dùng (Thêm 50k ăn phở, Trừ 10k gửi xe).
-- Kiểm chứng kết quả "Số dư" xem có cộng trừ đúng không.
-- Bảo đảm **bao phủ 80% coverage** theo chuẩn `testing.md`.
+- Dùng Jest tạo môi trường giả lập.
+- Ném chuỗi "Ăn bún bò 35000 VNĐ" vào hàm xử lý, `expect(amount).toBe(35000)`. 
+- Pass 100% test case để đảm bảo logic chạy hoàn hảo ở mọi string.
 
 ---
 
 ### Bước 7: Done! Push Code (Commit Push)
-*Ngữ cảnh: Mọi module App chi tiêu đã hoàn thiện.*
+*Ngữ cảnh: Báo cáo kết quả với team.*
 
 **Lệnh thực hiện:**
 ```bash
-/commit-push Hoàn thiện màn hình Dashboard Quản lý chi tiêu
+/commit-push Hoàn thiện màn hình Nhập liệu AI và Thống kê Tháng.
 ```
 
 **Phản ứng của AI:**
-- Mở quy trình tự xét duyệt: Chạy `eslint`, chạy `jest` nội bộ.
-- Pass 100%! AI format commit sang chuẩn Conventional và ép ngắn dưới 60 ký tự: `feat(expense): implement dashboard screen and offline store`.
-- Thực thi: `git add .`, `git commit`, và `git push`.
+- AI tự check eslint và pass mọi tests.
+- Trả ra một commit cực kỳ gọn gàng theo format chuẩn: `feat(expense): implement ai receipt parser and monthly dashboard`.
+- Execute `git add`, `git commit`, `git push` tự động kết thúc màn trình diễn.
 
 ---
-🎉 **HOÀN TẤT VÒNG ĐỜI**: Một kịch bản code tính năng từ Z-A, ứng dụng hoàn hảo quyền năng giám sát kỷ luật lập trình của Agent System.
+🎉 **TỔNG KẾT**: Một kịch bản demo "killer" vì nó không chỉ phô diễn quy trình gõ code chuẩn chỉ của Agent, mà phần feature (bóc tiền từ tin nhắn/hình chụp) là một Use-case vô cùng thực tế và thời thượng!
